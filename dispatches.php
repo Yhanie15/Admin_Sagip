@@ -7,6 +7,14 @@ $dispatchesRef = $database->getReference('dispatches');
 $dispatchesSnapshot = $dispatchesRef->getSnapshot();
 $dispatches = $dispatchesSnapshot->getValue();
 
+// Fetch the station names dynamically from the rescuer data
+foreach ($dispatches as $key => $dispatch) {
+    $rescuerID = $dispatch['rescuerID'];
+    // Fetch the station name from the rescuer node using rescuerID
+    $rescuerRef = $database->getReference('rescuer/' . $rescuerID);
+    $rescuerData = $rescuerRef->getValue();
+    $dispatches[$key]['stationName'] = $rescuerData['stationName']; // Store the station name
+}
 ?>
 
 <!DOCTYPE html>
@@ -95,14 +103,12 @@ $dispatches = $dispatchesSnapshot->getValue();
         <?php include 'topbar.php'; ?>
 
         <div class="container mt-4">
-            <h3>Dispatched Notifications</h3>
-
             <!-- Table for Displaying Dispatches -->
             <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
-                        <th>Fire Station Name</th>
-                        <th>Location</th>
+                        <th>Fire Station</th>
+                        <th>Fire Incident Location</th>
                         <th>Status</th>
                         <th>Time of Dispatch</th>
                     </tr>
