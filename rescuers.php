@@ -12,7 +12,15 @@ require_once 'dbcon.php';  // Assuming dbcon.php handles the Firebase connection
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        /* Sidebar styles */
+        /* Make the body take full height and enable scrolling if content overflows */
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar styling */
         #sidebar {
             width: 250px;
             height: 100vh;
@@ -24,26 +32,54 @@ require_once 'dbcon.php';  // Assuming dbcon.php handles the Firebase connection
             transition: width 0.3s;
         }
 
-        /* Content section (table) styling */
         #content {
-            margin-left: 250px; /* Set this to the sidebar width */
+            margin-left: 250px;
+            width: calc(100% - 250px);
             padding: 15px;
+            min-height: 100vh;
+            overflow-y: auto;
         }
 
-        /* Table responsiveness */
-        .table-responsive {
-            overflow-x: auto;
+        /* Topbar styles */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            background-color: #f8f9fa;
+            padding: 10px 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* Ensures proper display of table */
-        .table th, .table td {
-            vertical-align: middle;
-            text-align: center;
+        
+        /* Responsive Sidebar */
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 200px;
+            }
+            #content {
+                margin-left: 200px;
+                width: calc(100% - 200px);
+            }
         }
 
-        /* No need for hamburger button */
-        #toggleSidebar {
-            display: none;
+        @media (max-width: 576px) {
+            #sidebar {
+                width: 150px;
+            }
+            #content {
+                margin-left: 150px;
+                width: calc(100% - 150px);
+            }
+        }
+
+        /* Full width content for very small screens */
+        @media (max-width: 400px) {
+            #sidebar {
+                display: none; /* Hide the sidebar */
+            }
+            #content {
+                margin-left: 0;
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -55,21 +91,16 @@ require_once 'dbcon.php';  // Assuming dbcon.php handles the Firebase connection
     </div>
 
     <!-- Main Content (Right of Sidebar) -->
-    <div id="content">
+    <div id="content" class="d-flex flex-column">
         <!-- Topbar -->
-        <div class="d-flex justify-content-between bg-light p-3 shadow-sm">
-            <div>
-                <span class="material-icons">notifications</span>
-                <span class="material-icons">account_circle</span>
-                <span>Juan Masipag</span>
-            </div>
-        </div>
+        <?php include 'topbar.php'; ?>
 
+        <!-- Page Title -->
         <h4 class="ms-4 mt-3">Rescuer Accounts</h4>
 
         <!-- Table for Rescuers -->
         <div class="table-responsive mt-3">
-            <table class="table table-bordered">
+            <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
                         <th>Plate Number</th>
@@ -116,5 +147,6 @@ require_once 'dbcon.php';  // Assuming dbcon.php handles the Firebase connection
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

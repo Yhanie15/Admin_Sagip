@@ -35,23 +35,13 @@ $admin_name = isset($_SESSION['admin_name']) ? $_SESSION['admin_name'] : 'Admin'
                 <span class="material-icons">local_shipping</span> Dispatches
             </a>
         </li>
-
-        <!--<li class="nav-item">
-            <a href="incidents.php" class="nav-link text-white">
-                <span class="material-icons">report_problem</span> Incidents
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="fire_stations.php" class="nav-link text-white">
-                <span class="material-icons">fire_extinguisher</span> Fire Stations
-            </a>
-        </li>-->
         
         <li class="nav-item">
             <a href="reports.php" class="nav-link text-white">
                 <span class="material-icons">article</span> Reports
             </a>
         </li>
+
         <!-- Users Dropdown -->
         <li class="nav-item">
             <a href="#usersMenu" class="nav-link text-white" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="usersMenu">
@@ -82,9 +72,9 @@ $admin_name = isset($_SESSION['admin_name']) ? $_SESSION['admin_name'] : 'Admin'
 
     <!-- Sidebar Footer -->
     <div class="text-center mt-auto py-3">
-    <a href="login.php" class="btn btn-danger w-100 d-flex align-items-center justify-content-center">
-        <span class="material-icons me-2">logout</span> Logout
-    </a>
+        <a href="login.php" class="btn btn-danger w-100 d-flex align-items-center justify-content-center">
+            <span class="material-icons me-2">logout</span> Logout
+        </a>
     </div>
 </div>
 
@@ -112,7 +102,7 @@ $admin_name = isset($_SESSION['admin_name']) ? $_SESSION['admin_name'] : 'Admin'
 }
 
 .sidebar .nav-link:hover {
-    background-color: #1a252f;
+    background-color: #34495e;
 }
 
 .sidebar .nav-link .material-icons {
@@ -120,7 +110,7 @@ $admin_name = isset($_SESSION['admin_name']) ? $_SESSION['admin_name'] : 'Admin'
 }
 
 .nav-item .collapse {
-    background-color: #34495e; /* Slightly different shade for dropdown */
+    background-color: #1a252f; /* Slightly different shade for dropdown */
     border-left: 3px solid #1a252f; /* Visual separation for dropdown */
 }
 
@@ -143,3 +133,26 @@ $admin_name = isset($_SESSION['admin_name']) ? $_SESSION['admin_name'] : 'Admin'
     }
 }
 </style>
+
+<script>
+// Ensure the dropdown is open if navigating directly to calls.php#usersMenu
+document.addEventListener('DOMContentLoaded', function() {
+    const usersMenu = document.getElementById('usersMenu');
+    if (window.location.hash === '#usersMenu') {
+        // Manually show the dropdown if the URL contains the hash '#usersMenu'
+        const bootstrapDropdown = new bootstrap.Collapse(usersMenu, {
+            toggle: true
+        });
+        bootstrapDropdown.show();
+    }
+
+    // Ensure dropdown toggle works as intended
+    const dropdownToggle = document.querySelector('[href="#usersMenu"]');
+    if (dropdownToggle) {
+        dropdownToggle.addEventListener('click', function() {
+            const dropdownMenu = dropdownToggle.nextElementSibling;
+            dropdownMenu.classList.toggle('show');
+        });
+    }
+});
+</script>

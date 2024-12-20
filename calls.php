@@ -33,6 +33,7 @@ $database = $factory->createDatabase();
             left: 0;
             height: 100%;
             overflow-y: auto;
+            background-color: #2b3e50;
         }
 
         #content {
@@ -57,7 +58,6 @@ $database = $factory->createDatabase();
             font-weight: bold;
             margin: 10px;
         }
-
         .gap-3 {
             gap: 1rem;
         }
@@ -66,17 +66,53 @@ $database = $factory->createDatabase();
         .bg-warning { background-color: #ffc107; color: black; }
         .bg-success { background-color: #28a745; color: white; }
         .bg-danger { background-color: #dc3545; color: white; }
+
+        /* Dropdown functionality */
+        .nav-item.dropdown:hover .dropdown-menu {
+            display: block;
+        }
+
+        /* Sidebar responsive layout */
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 200px;
+            }
+            #content {
+                margin-left: 200px;
+                width: calc(100% - 200px);
+            }
+        }
+
+        @media (max-width: 576px) {
+            #sidebar {
+                width: 150px;
+            }
+            #content {
+                margin-left: 150px;
+                width: calc(100% - 150px);
+            }
+        }
+
+        @media (max-width: 400px) {
+            #sidebar {
+                display: none; 
+            }
+            #content {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Sidebar -->
     <div id="sidebar">
-        <?php include 'sidebar.php'; ?>
+        <?php include 'sidebar.php'; ?> <!-- Including the sidebar file -->
     </div>
 
     <!-- Main Content -->
     <div id="content" class="d-flex flex-column">
-        <?php include 'topbar.php'; ?>
+        <?php include 'topbar.php'; ?> <!-- Including the topbar file -->
 
         <!-- Stat Boxes -->
         <div class="d-flex justify-content-center align-items-center flex-wrap gap-3 mt-3">
@@ -148,7 +184,7 @@ $database = $factory->createDatabase();
                 const incomingCallsContainer = document.getElementById('incoming-calls');
                 incomingCallsContainer.innerHTML = '';
                 for (const [key, call] of Object.entries(incomingCalls)) {
-                    incomingCallsContainer.innerHTML += `
+                    incomingCallsContainer.innerHTML += ` 
                         <div class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
                                 <strong>Name:</strong> ${call.residentName}<br>

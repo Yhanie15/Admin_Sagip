@@ -7,13 +7,27 @@ $dispatchesRef = $database->getReference('dispatches');
 $dispatchesSnapshot = $dispatchesRef->getSnapshot();
 $dispatches = $dispatchesSnapshot->getValue();
 
-// Fetch the station names dynamically from the rescuer data
-foreach ($dispatches as $key => $dispatch) {
-    $rescuerID = $dispatch['rescuerID'];
-    // Fetch the station name from the rescuer node using rescuerID
-    $rescuerRef = $database->getReference('rescuer/' . $rescuerID);
-    $rescuerData = $rescuerRef->getValue();
-    $dispatches[$key]['stationName'] = $rescuerData['stationName']; // Store the station name
+// Ensure that dispatches is not empty or null
+if ($dispatches) {
+    // Fetch the station names dynamically from the rescuer data
+    foreach ($dispatches as $key => $dispatch) {
+        if (isset($dispatch['rescuerID'])) {
+            $rescuerID = $dispatch['rescuerID'];
+            // Fetch the station name from the rescuer node using rescuerID
+            $rescuerRef = $database->getReference('rescuer/' . $rescuerID);
+            $rescuerData = $rescuerRef->getValue();
+
+            // Ensure rescuer data is fetched successfully
+            if ($rescuerData && isset($rescuerData['stationName'])) {
+                $dispatches[$key]['stationName'] = $rescuerData['stationName']; // Store the station name
+            } else {
+                // If no station name found, you can set a default value or handle the error
+                $dispatches[$key]['stationName'] = 'Unknown Station';
+            }
+        }
+    }
+} else {
+    $dispatches = []; // If no dispatches found, set an empty array
 }
 ?>
 
