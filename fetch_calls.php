@@ -8,26 +8,43 @@ $factory = (new Factory)
     ->withDatabaseUri('https://capstone-sagip-siklab-default-rtdb.firebaseio.com/');
 
 $database = $factory->createDatabase();
-
-// Fetch incoming calls
 $calls = $database->getReference('Calls')->getValue();
 
-// Separate incoming calls and call logs
+$totalCalls = 0;
+$missedCalls = 0;
+$answeredCalls = 0;
+$ongoingCalls = 0;
 $incomingCalls = [];
 $callLog = [];
 
+$today = (new DateTime())->format('Y-m-d');
+
 if ($calls) {
     foreach ($calls as $key => $call) {
-        if ($call['status'] === 'Ongoing') {
-            $incomingCalls[$key] = $call;
+        $callDate = isset($call['time']) ? (new DateTime($call['time']))->format('Y-m-d') : null;
+        if ($callDate === $today) {
+            $totalCalls++;
+            if ($call['status'] === 'Missed Call') {
+                $missedCalls++;
+            } elseif ($call['status'] === 'Answered') {
+                $answeredCalls++;
+            } elseif ($call['status'] === 'Ongoing') {
+                $ongoingCalls++;
+                $incomingCalls[$key] = $call;
+            }
         }
         $callLog[] = $call;
     }
 }
 
-// Return JSON response
 header('Content-Type: application/json');
 echo json_encode([
     'incoming' => $incomingCalls,
-    'callLog' => $callLog
+    'callLog' => $callLog,
+    'stats' => [
+        'totalCalls' => $totalCalls,
+        'missedCalls' => $missedCalls,
+        'answeredCalls' => $answeredCalls,
+        'ongoingCalls' => $ongoingCalls,
+    ],
 ]);

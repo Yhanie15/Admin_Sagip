@@ -1,3 +1,11 @@
+<?php
+$callId = $_GET['callId'] ?? null;
+
+if (!$callId) {
+    die('Invalid call ID. Redirect back to the dashboard.');
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
