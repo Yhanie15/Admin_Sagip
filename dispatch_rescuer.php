@@ -3,10 +3,16 @@
 include('dbcon.php');
 
 // Get the data from the POST request
-$rescuerID = $_POST['rescuerID']; // Rescuer ID
-$reportKey = $_POST['reportKey']; // Fire report ID
-$location = $_POST['location']; // Fire incident location
-$fireStationName = $_POST['fireStationName']; // Fire station name
+$rescuerID = isset($_POST['rescuerID']) ? $_POST['rescuerID'] : '';
+$reportKey = isset($_POST['reportKey']) ? $_POST['reportKey'] : '';
+$location = isset($_POST['location']) ? $_POST['location'] : '';
+$fireStationName = isset($_POST['fireStationName']) ? $_POST['fireStationName'] : '';
+
+// Ensure that required fields are present
+if (empty($rescuerID) || empty($reportKey) || empty($location) || empty($fireStationName)) {
+    echo json_encode(['success' => false, 'message' => 'Missing required fields.']);
+    exit;
+}
 
 // Get current time (dispatch time)
 $dispatchTime = date('Y-m-d H:i:s');
