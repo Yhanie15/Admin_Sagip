@@ -53,7 +53,7 @@
 
 <script>
     const APP_ID = '9a8a11d5ff0a4f388d69ff7b5f803392';
-    const TOKEN = '007eJxTYJg+98DdVqcr2hYzTk8PZmXblcGadHU211aO3AWmzO41P/8pMFgmWiQaGqaYpqUZJJqkGVtYpJhZpqWZJ5mmWRgYG1saTRVLTm8IZGSYza3JwAiFID4PQ3FiemZBfHFmdk5iEgMDAAXFINw=';
+    const TOKEN = '007eJxTYJgfd/JG6kOeV4rvzVX/b8650Zk4z22lxivBLR579vUUs71QYLBMtEg0NEwxTUszSDRJM7awSDGzTEszTzJNszAwNrY0OliQkt4QyMhg8DqKlZEBAkF8HobixPTMgvjizOycxCQGBgAAnCRh';
     const CHANNEL_NAME = 'sagip_siklab';
 
     const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
