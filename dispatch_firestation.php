@@ -183,28 +183,34 @@ usort($nearestRescuers, function ($a, $b) {
     </div>
 
     <script>
+
         // Function to dispatch the nearest firestation
-        function dispatchFirestation(rescuerID, reportKey, location) {
-            fetch('dispatch_rescuer.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'rescuerID=' + encodeURIComponent(rescuerID) + '&reportKey=' + encodeURIComponent(reportKey) + '&location=' + encodeURIComponent(location),
-            })
-            .then((response) => response.json())
-            .then((data) => {
-                if (data.success) {
-                    alert(data.message);
-                } else {
-                    alert('Failed to dispatch firestation: ' + data.message);
-                }
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                alert('An error occurred while dispatching the firestation.');
-            });
-        }   
+     // Function to dispatch the nearest firestation
+function dispatchFirestation(rescuerID, reportKey, location, fireStationName) {
+    fetch('dispatch_rescuer.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'rescuerID=' + encodeURIComponent(rescuerID) + 
+              '&reportKey=' + encodeURIComponent(reportKey) + 
+              '&location=' + encodeURIComponent(location) + 
+              '&fireStationName=' + encodeURIComponent(fireStationName),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        if (data.success) {
+            alert(data.message);
+        } else {
+            alert('Failed to dispatch firestation: ' + data.message);
+        }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+        alert('An error occurred while dispatching the firestation.');
+    });
+}
+ 
     </script>
 
     <!-- Bootstrap JS -->
