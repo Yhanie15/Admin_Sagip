@@ -33,7 +33,6 @@ $database = $factory->createDatabase();
             left: 0;
             height: 100%;
             overflow-y: auto;
-            background-color: #2b3e50;
         }
 
         #content {
@@ -58,6 +57,7 @@ $database = $factory->createDatabase();
             font-weight: bold;
             margin: 10px;
         }
+
         .gap-3 {
             gap: 1rem;
         }
@@ -67,52 +67,22 @@ $database = $factory->createDatabase();
         .bg-success { background-color: #28a745; color: white; }
         .bg-danger { background-color: #dc3545; color: white; }
 
-        /* Dropdown functionality */
-        .nav-item.dropdown:hover .dropdown-menu {
-            display: block;
-        }
-
-        /* Sidebar responsive layout */
-        @media (max-width: 768px) {
-            #sidebar {
-                width: 200px;
-            }
-            #content {
-                margin-left: 200px;
-                width: calc(100% - 200px);
-            }
-        }
-
-        @media (max-width: 576px) {
-            #sidebar {
-                width: 150px;
-            }
-            #content {
-                margin-left: 150px;
-                width: calc(100% - 150px);
-            }
-        }
-
-        @media (max-width: 400px) {
-            #sidebar {
-                display: none; 
-            }
-            #content {
-                margin-left: 0;
-                width: 100%;
-            }
+        /* Scrollable sections */
+        .scrollable-section {
+            max-height: 400px; /* Adjust as needed */
+            overflow-y: auto;
         }
     </style>
 </head>
 <body>
     <!-- Sidebar -->
     <div id="sidebar">
-        <?php include 'sidebar.php'; ?> <!-- Including the sidebar file -->
+        <?php include 'sidebar.php'; ?>
     </div>
 
     <!-- Main Content -->
     <div id="content" class="d-flex flex-column">
-        <?php include 'topbar.php'; ?> <!-- Including the topbar file -->
+        <?php include 'topbar.php'; ?>
 
         <!-- Stat Boxes -->
         <div class="d-flex justify-content-center align-items-center flex-wrap gap-3 mt-3">
@@ -138,14 +108,16 @@ $database = $factory->createDatabase();
         <div class="row mt-3">
             <div class="col-md-6">
                 <h5>Incoming Calls</h5>
-                <div class="list-group" id="incoming-calls">
+                <!-- Make incoming calls scrollable here -->
+                <div class="list-group scrollable-section" id="incoming-calls">
                     <div class="list-group-item">Loading incoming calls...</div>
                 </div>
             </div>
 
             <div class="col-md-6">
                 <h5>Call Log</h5>
-                <div class="table-responsive">
+                <!-- Make call log scrollable here -->
+                <div class="table-responsive scrollable-section">
                     <table class="table table-bordered">
                         <thead>
                             <tr>
@@ -174,7 +146,7 @@ $database = $factory->createDatabase();
                 const incomingCalls = data.incoming || {};
                 const callLog = data.callLog || [];
 
-                // Update Stat Boxes dynamically
+                // Update Stat Boxes
                 document.getElementById('total-calls').textContent = stats.totalCalls || 0;
                 document.getElementById('missed-calls').textContent = stats.missedCalls || 0;
                 document.getElementById('answered-calls').textContent = stats.answeredCalls || 0;
@@ -184,7 +156,7 @@ $database = $factory->createDatabase();
                 const incomingCallsContainer = document.getElementById('incoming-calls');
                 incomingCallsContainer.innerHTML = '';
                 for (const [key, call] of Object.entries(incomingCalls)) {
-                    incomingCallsContainer.innerHTML += ` 
+                    incomingCallsContainer.innerHTML += `
                         <div class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
                                 <strong>Name:</strong> ${call.residentName}<br>
@@ -199,18 +171,29 @@ $database = $factory->createDatabase();
                     incomingCallsContainer.innerHTML = '<div class="list-group-item">No incoming calls at the moment.</div>';
                 }
 
-                // Update Call Log Section
+                // Update Call Log Section (only show today's calls)
                 const callLogContainer = document.getElementById('call-log');
                 callLogContainer.innerHTML = '';
+                let hasTodayCalls = false;
+                const todayString = new Date().toDateString();
+
                 for (const call of callLog) {
-                    callLogContainer.innerHTML += `
-                        <tr>
-                            <td>${call.residentName}</td>
-                            <td>${call.address || 'N/A'}</td>
-                            <td>${new Date(call.time).toLocaleTimeString()}</td>
-                            <td>${call.status}</td>
-                        </tr>
-                    `;
+                    const callDateString = new Date(call.time).toDateString();
+                    if (callDateString === todayString) {
+                        hasTodayCalls = true;
+                        callLogContainer.innerHTML += `
+                            <tr>
+                                <td>${call.residentName}</td>
+                                <td>${call.address || 'N/A'}</td>
+                                <td>${new Date(call.time).toLocaleTimeString()}</td>
+                                <td>${call.status}</td>
+                            </tr>
+                        `;
+                    }
+                }
+
+                if (!hasTodayCalls) {
+                    callLogContainer.innerHTML = '<tr><td colspan="4">No call logs available.</td></tr>';
                 }
             } catch (error) {
                 console.error('Error fetching calls:', error);
@@ -240,9 +223,9 @@ $database = $factory->createDatabase();
             }
         }
 
-        // Fetch calls initially and refresh every 5 seconds
+        // Fetch calls initially and refresh every 1 seconds
         fetchCalls();
-        setInterval(fetchCalls, 5000);
+        setInterval(fetchCalls, 1000);
     </script>
 </body>
 </html>
