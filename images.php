@@ -6,19 +6,21 @@ $ref = 'reports_image';
 $reports = $database->getReference($ref)->getValue();
 
 // Count statistics for the reports
-$totalReports = count($reports);
+$totalReports = $reports ? count($reports) : 0;
 $resolvedReports = 0;
 $inProgressReports = 0;
 $pendingReports = 0;
 
-foreach ($reports as $report) {
-    $status = strtolower($report['status'] ?? 'pending');
-    if ($status === 'resolved') {
-        $resolvedReports++;
-    } elseif ($status === 'in progress') {
-        $inProgressReports++;
-    } elseif ($status === 'pending') {
-        $pendingReports++;
+if ($reports) {
+    foreach ($reports as $report) {
+        $status = strtolower($report['status'] ?? 'pending');
+        if ($status === 'resolved') {
+            $resolvedReports++;
+        } elseif ($status === 'in progress') {
+            $inProgressReports++;
+        } elseif ($status === 'pending') {
+            $pendingReports++;
+        }
     }
 }
 ?>
@@ -177,8 +179,6 @@ foreach ($reports as $report) {
                 <strong>Total Reports Today</strong>
                 <div><?= $totalReports ?></div>
             </div>
-        
-            
         </div>
 
         <!-- Page Title -->
@@ -197,27 +197,33 @@ foreach ($reports as $report) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if ($reports): ?>
+                    <?php if (!empty($reports)): ?>
                         <?php foreach ($reports as $reportKey => $report): ?>
+                            <?php 
+                                // Fetch the reportId (if it exists) but DO NOT display it
+                                // We'll pass it to the Accept link or store it as hidden data
+                                $reportId = $report['reportId'] ?? null; 
+                                
+                                // Prepare data for display
+                                $senderName = htmlspecialchars($report['senderName'] ?? 'Unknown');
+                                $imageUrl   = htmlspecialchars($report['imageUrl'] ?? 'https://via.placeholder.com/60');
+                                $location   = htmlspecialchars($report['location'] ?? 'No location provided');
+                                $timestamp  = htmlspecialchars(date('Y-m-d H:i:s', strtotime($report['timestamp'] ?? 'now')));
+                                $status     = $report['status'] ?? 'Pending';
+                                
+                                $badgeClass = match (strtolower($status)) {
+                                    'resolved' => 'bg-success',
+                                    'in progress' => 'bg-warning',
+                                    'pending' => 'bg-danger',
+                                    default => 'bg-secondary',
+                                };
+                            ?>
                             <tr data-bs-toggle="modal" data-bs-target="#reportModal<?= $reportKey ?>">
-                                <td><?= htmlspecialchars($report['senderName'] ?? 'Unknown') ?></td>
-                                <td>
-                                    <img src="<?= htmlspecialchars($report['imageUrl'] ?? 'https://via.placeholder.com/60') ?>" alt="Report Image">
-                                </td>
-                                <td><?= htmlspecialchars($report['location'] ?? 'No location provided') ?></td>
-                                <td><?= htmlspecialchars(date('Y-m-d H:i:s', strtotime($report['timestamp'] ?? 'now'))) ?></td>
-                                <td>
-                                    <?php
-                                    $status = $report['status'] ?? 'Pending';
-                                    $badgeClass = match (strtolower($status)) {
-                                        'resolved' => 'bg-success',
-                                        'in progress' => 'bg-warning',
-                                        'pending' => 'bg-danger',
-                                        default => 'bg-secondary',
-                                    };
-                                    ?>
-                                    <span class="badge <?= $badgeClass ?>"><?= ucfirst($status) ?></span>
-                                </td>
+                                <td><?= $senderName ?></td>
+                                <td><img src="<?= $imageUrl ?>" alt="Report Image"></td>
+                                <td><?= $location ?></td>
+                                <td><?= $timestamp ?></td>
+                                <td><span class="badge <?= $badgeClass ?>"><?= ucfirst($status) ?></span></td>
                             </tr>
 
                             <!-- Modal for Viewing Report -->
@@ -233,8 +239,16 @@ foreach ($reports as $report) {
                                             <p><strong>Location:</strong> <?= htmlspecialchars($report['location'] ?? 'No location provided') ?></p>
                                         </div>
                                         <div class="modal-footer">
-                                            <a href="dispatch_firestation.php?reportKey=<?= $reportKey ?>" class="btn btn-success">Accept Report</a>
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            <!-- Pass both the Firebase key AND the reportId, but not displayed on screen -->
+                                            <a 
+                                                href="dispatch_firestation.php?reportKey=<?= urlencode($reportKey) ?>&reportId=<?= urlencode($reportId ?? '') ?>" 
+                                                class="btn btn-success"
+                                            >
+                                                Accept Report
+                                            </a>
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                Close
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
