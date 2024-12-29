@@ -9,6 +9,13 @@ $reportKey = isset($_GET['reportKey']) ? $_GET['reportKey'] : null;
 $reportRef = $database->getReference('reports_image/' . $reportKey);
 $report = $reportRef->getValue();
 
+// ----------------------------------------------------------------
+// NEW LOGIC: Update the report’s status to "Accepted" if we have a valid key
+// ----------------------------------------------------------------
+if ($reportKey) {
+    $reportRef->update(['status' => 'Accepted']);
+}
+
 // Fetch the nearest rescuers from Firebase
 $rescuersRef = $database->getReference('rescuer');
 $rescuersSnapshot = $rescuersRef->getSnapshot();
@@ -169,11 +176,19 @@ usort($nearestRescuers, function ($a, $b) {
                             <td><?php echo htmlspecialchars($rescuer['exactLocation']); ?></td>
                             <td><?php echo $rescuer['distance']; ?> km</td>
                             <td>
-                                <button 
-                                    class="btn btn-success" 
-                                    onclick="dispatchFirestation('<?php echo htmlspecialchars($rescuer['rescuerID']); ?>', '<?php echo htmlspecialchars($reportKey); ?>', '<?php echo htmlspecialchars($report['location']); ?>')">
-                                    Dispatch
-                                </button>
+                            <button 
+    class="btn btn-success" 
+    onclick="dispatchFirestation(
+        '<?php echo htmlspecialchars($rescuer['rescuerID']); ?>',
+        '<?php echo htmlspecialchars($reportKey); ?>',
+        '<?php echo htmlspecialchars($report['location']); ?>',
+        '<?php echo htmlspecialchars($rescuer['stationName']); ?>'
+    )"
+>
+    Dispatch
+</button>
+
+
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -183,9 +198,6 @@ usort($nearestRescuers, function ($a, $b) {
     </div>
 
     <script>
-
-        // Function to dispatch the nearest firestation
-     // Function to dispatch the nearest firestation
 function dispatchFirestation(rescuerID, reportKey, location, fireStationName) {
     fetch('dispatch_rescuer.php', {
         method: 'POST',
@@ -210,8 +222,8 @@ function dispatchFirestation(rescuerID, reportKey, location, fireStationName) {
         alert('An error occurred while dispatching the firestation.');
     });
 }
- 
-    </script>
+</script>
+
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
