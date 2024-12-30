@@ -26,6 +26,15 @@ if ($dispatches) {
             }
         }
     }
+
+    // Sort the dispatches by 'dispatchTime' in descending order (newer dispatches first)
+    usort($dispatches, function($a, $b) {
+        // Assuming 'dispatchTime' is in a valid format like "Y-m-d H:i:s"
+        $timeA = strtotime($a['dispatchTime']);
+        $timeB = strtotime($b['dispatchTime']);
+        return $timeB - $timeA; // Sort in descending order
+    });
+
 } else {
     $dispatches = []; // If no dispatches found, set an empty array
 }
@@ -140,7 +149,13 @@ if ($dispatches) {
                                     echo ucfirst($status);
                                     ?>
                                 </td>
-                                <td><?php echo htmlspecialchars($dispatch['dispatchTime']); ?></td>
+                                <td>
+                                    <?php 
+                                    // Format dispatch time to 12-hour format with AM/PM and retain the date
+                                    $dispatchTime = strtotime($dispatch['dispatchTime']);
+                                    echo date("M d, Y g:i A", $dispatchTime); // Full date and 12-hour format with AM/PM
+                                    ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>

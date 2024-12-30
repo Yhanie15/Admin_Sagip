@@ -15,7 +15,10 @@ if (empty($rescuerID) || empty($reportKey) || empty($location) || empty($fireSta
 
 // Let's define the status we want to set in both places
 $dispatchStatus = 'Dispatching';
-$dispatchTime   = date('Y-m-d H:i:s');
+
+// Set dispatch time to Philippine Standard Time (PST)
+$dispatchTime = new DateTime('now', new DateTimeZone('Asia/Manila'));  // Current time in Asia/Manila timezone
+$dispatchTime = $dispatchTime->format('Y-m-d H:i:s');  // Format the date as "YYYY-MM-DD HH:MM:SS"
 
 // 1) Generate a new key for "dispatches"
 $dispatchKey = $database->getReference('dispatches')->push()->getKey();
@@ -49,3 +52,4 @@ try {
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Error writing data: ' . $e->getMessage()]);
 }
+?>
