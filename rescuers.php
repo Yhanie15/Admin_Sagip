@@ -124,7 +124,14 @@ require_once 'dbcon.php';  // Assuming dbcon.php handles the Firebase connection
                             $plateNumber = isset($rescuer['plateNumber']) ? $rescuer['plateNumber'] : 'N/A';
                             $stationName = isset($rescuer['stationName']) ? $rescuer['stationName'] : 'N/A';
                             $truckNumber = isset($rescuer['truckNumber']) ? $rescuer['truckNumber'] : 'N/A';
-                            $createdAt = isset($rescuer['createdAt']) ? $rescuer['createdAt'] : 'N/A';
+                            $createdAt = isset($rescuer['createdAt']) ? $rescuer['createdAt'] : null;
+
+                            // Format 'createdAt' if it's a valid timestamp
+                            if ($createdAt) {
+                                $formattedCreatedAt = date('F j, Y , g:i A', strtotime($createdAt)); // Example: "January 1, 2025 , 1:21 AM"
+                            } else {
+                                $formattedCreatedAt = 'N/A';
+                            }
 
                             // Displaying the information in the table
                             echo "
@@ -134,7 +141,7 @@ require_once 'dbcon.php';  // Assuming dbcon.php handles the Firebase connection
                                     <td>{$truckNumber}</td>
                                     <td>{$assignedBarangay}</td>
                                     <td>{$assignedDistrict}</td>
-                                    <td>{$createdAt}</td>
+                                    <td>{$formattedCreatedAt}</td>
                                 </tr>
                             ";
                         }

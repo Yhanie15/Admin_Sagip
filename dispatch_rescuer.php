@@ -13,7 +13,7 @@ if (empty($rescuerID) || empty($reportKey) || empty($location) || empty($fireSta
     exit;
 }
 
-// Let's define the status we want to set in both places
+// Define the status we want to set in both places
 $dispatchStatus = 'Dispatching';
 
 // Set dispatch time to Philippine Standard Time (PST)
@@ -23,10 +23,14 @@ $dispatchTime = $dispatchTime->format('Y-m-d H:i:s');  // Format the date as "YY
 // 1) Generate a new key for "dispatches"
 $dispatchKey = $database->getReference('dispatches')->push()->getKey();
 
-// 2) Build the combined data you want to write
+// 2) Generate a unique dispatchID
+$dispatchID = uniqid('dispatch_', true);
+
+// 3) Build the combined data you want to write
 $updates = [
     // Write dispatch record under "dispatches/$dispatchKey"
     "dispatches/$dispatchKey" => [
+        'dispatchID'      => $dispatchID,
         'rescuerID'       => $rescuerID,
         'reportKey'       => $reportKey,
         'location'        => $location,
@@ -34,11 +38,12 @@ $updates = [
         'dispatchTime'    => $dispatchTime,
         'status'          => $dispatchStatus
     ],
-    // Write the same status into "reports_image/$reportKey"
-    "reports_image/$reportKey/status" => $dispatchStatus,
+    // Write the same status and dispatchID into "reports_image/$reportKey"
+    "reports_image/$reportKey/status"       => $dispatchStatus,
+    "reports_image/$reportKey/dispatchID"   => $dispatchKey, // Link to dispatchKey
 ];
 
-// 3) Perform a multi-path update
+// 4) Perform a multi-path update
 try {
     $database->getReference()->update($updates);
 
