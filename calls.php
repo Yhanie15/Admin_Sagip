@@ -223,7 +223,7 @@ $database = $factory->createDatabase();
             }
         }
 
-        // Fetch calls initially and refresh every 1 seconds
+        // Fetch calls initially and refresh every 5 seconds
         fetchCalls();
         setInterval(fetchCalls, 1000);
     </script>
