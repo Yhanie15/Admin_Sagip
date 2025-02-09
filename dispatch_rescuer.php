@@ -2,14 +2,24 @@
 include('dbcon.php'); // sets up $database
 
 // POST fields
-$rescuerID       = $_POST['rescuerID']       ?? '';
-$reportKey       = $_POST['reportKey']       ?? '';
-$location        = $_POST['location']        ?? '';
-$fireStationName = $_POST['fireStationName'] ?? '';
+$rescuerID       = isset($_POST['rescuerID']) ? trim($_POST['rescuerID']) : '';
+$reportKey       = isset($_POST['reportKey']) ? trim($_POST['reportKey']) : '';
+$location        = isset($_POST['location']) ? trim($_POST['location']) : '';
+$fireStationName = isset($_POST['fireStationName']) ? trim($_POST['fireStationName']) : '';
+$reportVia       = isset($_POST['reportVia']) ? trim($_POST['reportVia']) : ''; // New field for report source
+$latitude        = isset($_POST['latitude']) ? trim($_POST['latitude']) : null; // Retrieve latitude
+$longitude       = isset($_POST['longitude']) ? trim($_POST['longitude']) : null; // Retrieve longitude
 
 // If missing fields, bail out
-if (empty($rescuerID) || empty($reportKey) || empty($location) || empty($fireStationName)) {
+if (empty($rescuerID) || empty($reportKey) || empty($location) || empty($fireStationName) || empty($reportVia)) {
     echo json_encode(['success' => false, 'message' => 'Missing required fields.']);
+    exit;
+}
+
+// Validate reportVia
+$validReportVia = ['Call', 'Image'];
+if (!in_array($reportVia, $validReportVia)) {
+    echo json_encode(['success' => false, 'message' => 'Invalid reportVia value.']);
     exit;
 }
 
@@ -26,7 +36,23 @@ $dispatchKey = $database->getReference('dispatches')->push()->getKey();
 // 2) Generate a unique dispatchID
 $dispatchID = uniqid('dispatch_', true);
 
-// 3) Build the combined data you want to write
+// 3) Determine the report path based on reportVia
+if ($reportVia === 'Image') {
+    $reportPath = "reports_image/$reportKey";
+} elseif ($reportVia === 'Call') {
+    $reportPath = "Calls/$reportKey";
+}
+
+// Check if the report exists
+$reportRef = $database->getReference($reportPath);
+$report = $reportRef->getValue();
+
+if (!$report) {
+    echo json_encode(['success' => false, 'message' => 'Report not found.']);
+    exit;
+}
+
+// 4) Build the combined data you want to write
 $updates = [
     // Write dispatch record under "dispatches/$dispatchKey"
     "dispatches/$dispatchKey" => [
@@ -34,24 +60,41 @@ $updates = [
         'rescuerID'       => $rescuerID,
         'reportKey'       => $reportKey,
         'location'        => $location,
+        'latitude'        => $latitude,  // Include latitude in the data
+        'longitude'       => $longitude, // Include longitude in the data
         'fireStationName' => $fireStationName,
         'dispatchTime'    => $dispatchTime,
-        'status'          => $dispatchStatus
+        'status'          => $dispatchStatus,
+        'reportVia'       => $reportVia  // Add the "Report Via" field here
     ],
-    // Write the same status and dispatchID into "reports_image/$reportKey"
-    "reports_image/$reportKey/status"       => $dispatchStatus,
-    "reports_image/$reportKey/dispatchID"   => $dispatchKey, // Link to dispatchKey
+    // Write the same status and dispatchID into the correct report node
+    "$reportPath/status"       => $dispatchStatus,
+    "$reportPath/dispatchID"   => $dispatchKey, // Link to dispatchKey
 ];
 
-// 4) Perform a multi-path update
+// 5) Perform a multi-path update
 try {
     $database->getReference()->update($updates);
 
     // Also update the rescuer's node if needed
-    $database->getReference("rescuer/$rescuerID")->update([
-        'status'           => $dispatchStatus,
-        'dispatchLocation' => $location
-    ]);
+    $rescuersRef = $database->getReference("rescuer/$rescuerID");
+    $rescuer = $rescuersRef->getValue();
+
+    if ($rescuer) {
+        $rescuerUpdates = [
+            'status'           => $dispatchStatus,
+            'dispatchLocation' => $location
+        ];
+
+        // Optionally, keep track of dispatch history if needed
+        if (isset($rescuer['dispatchHistory']) && is_array($rescuer['dispatchHistory'])) {
+            $rescuerUpdates['dispatchHistory'][] = $dispatchKey;
+        } else {
+            $rescuerUpdates['dispatchHistory'] = [$dispatchKey];
+        }
+
+        $database->getReference("rescuer/$rescuerID")->update($rescuerUpdates);
+    }
 
     echo json_encode(['success' => true, 'message' => 'Dispatch sent successfully']);
 } catch (Exception $e) {
