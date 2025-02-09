@@ -1,19 +1,60 @@
+
 <?php
 // Include Firebase connection
 include('dbcon.php');
 
-// Get the report key from the URL
-$reportKey = isset($_GET['reportKey']) ? $_GET['reportKey'] : null;
+// Get the report ID or call ID from the URL
+$reportId = isset($_GET['reportId']) ? $_GET['reportId'] : null;
+$callId = isset($_GET['callId']) ? $_GET['callId'] : null; // For Calls table
 
-// Fetch the report details from Firebase using the report key
-$reportRef = $database->getReference('reports_image/' . $reportKey);
-$report = $reportRef->getValue();
+// Initialize variables
+$location = '';
+$senderName = '';
+$incidentLat = null;
+$incidentLon = null;
+$currentReportKey = '';
+$currentReportVia = '';
 
-// ----------------------------------------------------------------
-// NEW LOGIC: Update the report’s status to "Accepted" if we have a valid key
-// ----------------------------------------------------------------
-if ($reportKey) {
-    $reportRef->update(['status' => 'Accepted']);
+// Fetch the report details from Firebase using the report ID (Reports_Image) or call ID (Calls)
+if ($reportId) {
+    // Fetch report from Reports_Image
+    $reportRef = $database->getReference('reports_image/' . $reportId);
+    $report = $reportRef->getValue();
+
+    if (!$report) {
+        die("Report not found.");
+    }
+
+    $location = isset($report['location']) ? $report['location'] : 'Unknown Location';
+    $senderName = isset($report['senderName']) ? $report['senderName'] : 'Anonymous';
+    $incidentLat = isset($report['latitude']) ? (float)$report['latitude'] : null;
+    $incidentLon = isset($report['longitude']) ? (float)$report['longitude'] : null;
+
+    $currentReportKey = $reportId;
+    $currentReportVia = "Image";
+} elseif ($callId) {
+    // Fetch report from Calls
+    $callRef = $database->getReference('Calls/' . $callId);
+    $call = $callRef->getValue();
+
+    if (!$call) {
+        die("Call report not found.");
+    }
+
+    $location = isset($call['address']) ? $call['address'] : 'Unknown Address';
+    $senderName = isset($call['callerName']) ? $call['callerName'] : 'Anonymous';
+    $incidentLat = isset($call['latitude']) ? (float)$call['latitude'] : null;
+    $incidentLon = isset($call['longitude']) ? (float)$call['longitude'] : null;
+
+    $currentReportKey = $callId;
+    $currentReportVia = "Call";
+} else {
+    die("No valid report or call ID provided.");
+}
+
+// Check if latitude and longitude are available
+if ($incidentLat === null || $incidentLon === null) {
+    die("Incident latitude and longitude not provided in the report.");
 }
 
 // Fetch the nearest rescuers from Firebase
@@ -21,20 +62,62 @@ $rescuersRef = $database->getReference('rescuer');
 $rescuersSnapshot = $rescuersRef->getSnapshot();
 $rescuers = $rescuersSnapshot->getValue();
 
+if (!$rescuers) {
+    die("No rescuers found.");
+}
+
 // Logic to calculate nearest rescuers
 $nearestRescuers = []; // This will hold the nearest rescuers
+
 foreach ($rescuers as $rescuer) {
-    $distance = rand(1, 50); // Random distance for now (replace with actual calculation)
+    // Ensure rescuer has necessary data
+    if (!isset($rescuer['latitude']) || !isset($rescuer['longitude']) || !isset($rescuer['stationName']) || !isset($rescuer['exactLocation'])) {
+        continue; // Skip incomplete rescuer entries
+    }
+
+    // Get latitude and longitude for the fire station (rescuer)
+    $stationLat = (float)$rescuer['latitude'];
+    $stationLon = (float)$rescuer['longitude'];
+    $stationName = $rescuer['stationName'];
+    $exactLocation = $rescuer['exactLocation'];
+
+    // Calculate the distance between the fire incident and the fire station
+    $distance = haversine($incidentLat, $incidentLon, $stationLat, $stationLon);
+
+    // Round the distance to one decimal place
+    $distance = round($distance, 1);
+
+    // Add the rescuer to the list with calculated distance
     $rescuer['distance'] = $distance;
     $nearestRescuers[] = $rescuer;
 }
 
 // Sort by distance (closest first)
 usort($nearestRescuers, function ($a, $b) {
-    return $a['distance'] - $b['distance'];
+    return $a['distance'] <=> $b['distance'];
 });
-?>
 
+// Haversine formula to calculate distance between two lat/lon points
+function haversine($lat1, $lon1, $lat2, $lon2) {
+    $earthRadius = 6371; // Earth radius in km
+
+    // Convert degrees to radians
+    $lat1 = deg2rad($lat1);
+    $lon1 = deg2rad($lon1);
+    $lat2 = deg2rad($lat2);
+    $lon2 = deg2rad($lon2);
+
+    // Haversine formula
+    $dlat = $lat2 - $lat1;
+    $dlon = $lon2 - $lon1;
+    $a = sin($dlat / 2) * sin($dlat / 2) +
+         cos($lat1) * cos($lat2) * sin($dlon / 2) * sin($dlon / 2);
+    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+    // Distance in km
+    return $earthRadius * $c;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -140,6 +223,7 @@ usort($nearestRescuers, function ($a, $b) {
         }
     </style>
 </head>
+
 <body>
     <!-- Sidebar -->
     <div id="sidebar">
@@ -154,8 +238,8 @@ usort($nearestRescuers, function ($a, $b) {
         <div class="container mt-4">
             <!-- Fire Incident Location and Reported By Section (Combined in one container) -->
             <div class="incident-info">
-                <p><strong>Fire Incident Location:</strong> <?php echo htmlspecialchars($report['location']); ?></p>
-                <p><strong>Reported By:</strong> <?php echo htmlspecialchars($report['senderName']); ?></p>
+                <p><strong>Fire Incident Location:</strong> <?php echo htmlspecialchars($location); ?></p>
+                <p><strong>Reported By:</strong> <?php echo htmlspecialchars($senderName); ?></p>
             </div>
 
             <!-- Nearest Firestations Table -->
@@ -165,7 +249,7 @@ usort($nearestRescuers, function ($a, $b) {
                     <tr>
                         <th>Station Name</th>
                         <th>Location</th>
-                        <th>Distance (km)</th>
+                        <!---<th>Distance (km)</th>-->
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -174,21 +258,17 @@ usort($nearestRescuers, function ($a, $b) {
                         <tr>
                             <td><?php echo htmlspecialchars($rescuer['stationName']); ?></td>
                             <td><?php echo htmlspecialchars($rescuer['exactLocation']); ?></td>
-                            <td><?php echo $rescuer['distance']; ?> km</td>
+                            <!--<td><?php echo $rescuer['distance']; ?> km</td>-->
                             <td>
-                            <button 
-    class="btn btn-success" 
-    onclick="dispatchFirestation(
-        '<?php echo htmlspecialchars($rescuer['rescuerID']); ?>',
-        '<?php echo htmlspecialchars($reportKey); ?>',
-        '<?php echo htmlspecialchars($report['location']); ?>',
-        '<?php echo htmlspecialchars($rescuer['stationName']); ?>'
-    )"
->
-    Dispatch
-</button>
-
-
+                                <button class="btn btn-success" onclick="dispatchFirestation(
+                                    '<?php echo htmlspecialchars($rescuer['rescuerID']); ?>',
+                                    '<?php echo htmlspecialchars($currentReportKey); ?>',
+                                    '<?php echo htmlspecialchars($location); ?>',
+                                    '<?php echo htmlspecialchars($rescuer['stationName']); ?>',
+                                    '<?php echo htmlspecialchars($currentReportVia); ?>',
+                                    '<?php echo $incidentLat; ?>', // Include the latitude
+                                    '<?php echo $incidentLon; ?>'  // Include the longitude
+                                )">Dispatch</button>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -198,32 +278,33 @@ usort($nearestRescuers, function ($a, $b) {
     </div>
 
     <script>
-function dispatchFirestation(rescuerID, reportKey, location, fireStationName) {
+    function dispatchFirestation(rescuerID, reportKey, location, fireStationName, reportVia, incidentLat, incidentLon) {
     fetch('dispatch_rescuer.php', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'rescuerID=' + encodeURIComponent(rescuerID) + 
               '&reportKey=' + encodeURIComponent(reportKey) + 
               '&location=' + encodeURIComponent(location) + 
-              '&fireStationName=' + encodeURIComponent(fireStationName),
+              '&fireStationName=' + encodeURIComponent(fireStationName) +
+              '&reportVia=' + encodeURIComponent(reportVia) +
+              '&latitude=' + encodeURIComponent(incidentLat) +
+              '&longitude=' + encodeURIComponent(incidentLon)
     })
-    .then((response) => response.json())
-    .then((data) => {
+    .then(response => response.json())
+    .then(data => {
         if (data.success) {
             alert(data.message);
+            location.reload();
         } else {
             alert('Failed to dispatch firestation: ' + data.message);
         }
     })
-    .catch((error) => {
+    .catch(error => {
         console.error('Error:', error);
         alert('An error occurred while dispatching the firestation.');
     });
-}
-</script>
-
+    }
+    </script>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
