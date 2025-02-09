@@ -67,12 +67,23 @@ if ($dispatches) {
             overflow-y: auto;
         }
 
+        #topbar {
+          position: fixed;
+          top: 0;
+          left: 250px; /* same as sidebar width */
+          width: calc(100% - 250px);
+          z-index: 9999; /* ensure it's on top of other elements */
+          background-color: #fff; /* same style as in images.php */
+          /* You can adjust margin, padding, or height as needed */
+        }
+        
         #content {
-            margin-left: 250px; /* Same width as the sidebar */
-            width: calc(100% - 250px);
-            padding: 15px;
-            min-height: 100vh;
-            overflow-y: auto; /* Enable scrolling for the main content */
+          margin-left: 250px; /* same as sidebar width */
+          width: calc(100% - 250px);
+          padding: 15px;
+          min-height: 100vh;
+          overflow-y: auto;
+          margin-top: 69px; /* to avoid content sliding under the fixed topbar */
         }
 
         /* Table Styling */
@@ -86,6 +97,10 @@ if ($dispatches) {
             #sidebar {
                 width: 200px;
             }
+            #topbar {
+                left: 200px;
+                width: calc(100% - 200px);
+            }
             #content {
                 margin-left: 200px;
                 width: calc(100% - 200px);
@@ -96,10 +111,14 @@ if ($dispatches) {
             #sidebar {
                 width: 150px;
             }
+            #topbar {
+                left: 150px;
+                width: calc(100% - 150px);
+            }
             #content {
                 margin-left: 150px;
                 width: calc(100% - 150px);
-            }
+            } 
         }
 
         /* Full width content for very small screens */
@@ -107,41 +126,57 @@ if ($dispatches) {
             #sidebar {
                 display: none; /* Hide the sidebar */
             }
-            #content {
+           #topbar {
+                left: 0;
+                width: 100%;
+            }
+          #content {
                 margin-left: 0;
                 width: 100%;
             }
         }
     </style>
 </head>
+
 <body>
     <!-- Sidebar -->
     <div id="sidebar">
         <?php include 'sidebar.php'; ?>
     </div>
+    
+    <!-- FIXED TOPBAR -->
+    <div id="topbar">
+    <?php include 'topbar.php'; ?>
+    </div>
 
     <!-- Main Content -->
     <div id="content" class="d-flex flex-column">
-        <!-- Topbar -->
-        <?php include 'topbar.php'; ?>
 
         <div class="container mt-4">
             <!-- Table for Displaying Dispatches -->
             <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
-                        <th>Fire Station</th>
+                        <th>Report Via</th> <!-- Rearranged Column -->
                         <th>Fire Incident Location</th>
+                        <th>Dispatched Fire Station</th> <!-- Rearranged Column -->
                         <th>Status</th>
-                        <th>Time of Dispatch</th>
+                        <th>Time/Date Dispatch</th> <!-- Rearranged Column -->
                     </tr>
                 </thead>
                 <tbody>
                     <?php if ($dispatches): ?>
                         <?php foreach ($dispatches as $dispatch): ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($dispatch['stationName']); ?></td>
+                                <td>
+                                    <?php 
+                                    // Display "Report Via" field
+                                    $reportVia = isset($dispatch['reportVia']) ? $dispatch['reportVia'] : 'Unknown';
+                                    echo htmlspecialchars($reportVia);
+                                    ?>
+                                </td>
                                 <td><?php echo htmlspecialchars($dispatch['location']); ?></td>
+                                <td><?php echo htmlspecialchars($dispatch['stationName']); ?></td>
                                 <td>
                                     <?php 
                                     // Display status based on dispatch state
@@ -160,7 +195,7 @@ if ($dispatches) {
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="4" class="text-center">No dispatches found.</td>
+                            <td colspan="5" class="text-center">No dispatches found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
