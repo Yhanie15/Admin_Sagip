@@ -11,19 +11,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         'name' => $name,
         'email' => $email,
         'password' => $password,
+        'user_type' => $userType,
         'created_at' => date('Y-m-d H:i:s')
     ];
 
     try {
         $database->getReference('admin')->push($userData);
-        header("Location: index.php?success=1"); // Add a success query param
+        // Redirect back to admin_users.php with success=true
+        header("Location: admin_users.php?success=true");
         exit;
     } catch (Exception $e) {
-        // In production, log this error instead of exposing it
-        die("Error saving user: " . $e->getMessage());
+        // Redirect back with error message
+        header("Location: admin_users.php?success=false&error=" . urlencode($e->getMessage()));
+        exit;
     }
 } else {
-    header("Location: index.php");
+    header("Location: admin_users.php");
     exit;
 }
 ?>
